@@ -1,65 +1,59 @@
-// Import necessary modules and traits for testing
-use soroban_sdk::{Context, Env, ReplyError};
-use your_contract_module::{create_campaign, fund_to_campaign, get_total_amount_collected, get_funders, get_campaigns, Campaign}; // Import your contract module and functions
+#![cfg(test)]
 
-// Mock Context and Env for testing
-struct MockContext;
+use super::*;
+use soroban_sdk::xdr::Type;
+use soroban_sdk::{symbol_short, vec, Env , Address, BytesN, String , Symbol, Vec, IntoVal};
+use soroban_sdk::testutils::{Address as AddressTest, Ledger, Logs};
 
-impl Context for MockContext {}
+#[test]
+fn create_campaign() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register_contract(None,Campaign);
+    let client = CampaignClient::new(&env, &contract_id);
 
-impl Env for MockEnv {
-    // Implement necessary functions from the Env trait for testing
+
+
+    let id = client.create_campaign(&mock(&env));
+    assert_eq!(id, 1);
+
+
+
+}
+#[test]
+fn get_campaign(){
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register_contract(None,Campaign);
+    let client = CampaignClient::new(&env, &contract_id);
+    let mocked_campaign = mock(&env);
+    let id = client.create_campaign(&mocked_campaign);
+    assert_eq!(id, 1);
+
+    let campaign = client.get_campaign(&id);
+    assert_eq!(campaign, mocked_campaign);
+
+}
+#[test]
+fn fund_to_campaign () {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register_contract(None,Campaign);
+    let client = CampaignClient::new(&env, &contract_id);
+    let mocked_campaign = mock(&env);
+    let id = client.create_campaign(&mocked_campaign);
+
+     client.fund_to_campaign(&id, &500, &Address::generate(&env));
+    
 }
 
-// Test create_campaign function
-#[test]
-fn test_create_campaign() {
-    let ctx = MockContext;
-    let title = "Test Campaign";
-    let description = "This is a test campaign";
-    let target = 1000;
-    let deadline = 1735689600; // Unix timestamp for January 1, 2025
-    let image = "test_image.jpg";
-
-    let result = create_campaign(&ctx, "", title, description, target, deadline, image);
-    assert!(result.is_ok());
-}
-
-// Test fund_to_campaign function
-#[test]
-fn test_fund_to_campaign() {
-    let ctx = MockContext;
-    let campaign_id = 1;
-
-    let result = fund_to_campaign(&ctx, campaign_id);
-    assert!(result.is_ok());
-}
-
-// Test get_total_amount_collected function
-#[test]
-fn test_get_total_amount_collected() {
-    let ctx = MockContext;
-    let campaign_id = 1;
-
-    let result = get_total_amount_collected(&ctx, campaign_id);
-    assert!(result.is_ok());
-}
-
-// Test get_funders function
-#[test]
-fn test_get_funders() {
-    let ctx = MockContext;
-    let campaign_id = 1;
-
-    let result = get_funders(&ctx, campaign_id);
-    assert!(result.is_ok());
-}
-
-// Test get_campaigns function
-#[test]
-fn test_get_campaigns() {
-    let ctx = MockContext;
-
-    let result = get_campaigns(&ctx);
-    assert!(result.is_ok());
+fn mock (env: &Env) -> types::Campaign {
+    types::Campaign {
+        owner :Address::generate(&env),
+        description :String::from_str(&env, "hellu"),
+        title : String::from_str(&env,"Dev"),
+        target_amount : 100,
+        deadline : 0,
+        image : String::from_str(  &env ,"")
+    }
 }
